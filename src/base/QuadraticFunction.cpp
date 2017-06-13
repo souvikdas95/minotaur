@@ -74,7 +74,14 @@ QuadraticFunction::QuadraticFunction(double* vals, VariableConstIterator vbeg,
   {
     for(VariableConstIterator it2 = vbeg; it2 != vend; ++it2)
     {
-      incTerm(*it, *it2, vals[i++]);
+      if(*it == *it2)
+      {
+        incTerm(*it, *it2, 0.5 * vals[i++]);
+      }
+      else
+      {
+        incTerm(*it, *it2, vals[i++]);
+      }
     }
   }
 }
