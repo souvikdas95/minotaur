@@ -22,6 +22,8 @@
 #include "HessianOfLag.h"
 #include "VarBoundMod.h"
 #include "Variable.h"
+#include "LinearFunction.h"
+#include "QuadraticFunction.h"
 
 using namespace Minotaur;
 
@@ -38,6 +40,113 @@ CGraph::CGraph()
   dq_.clear();
   varNode_.clear();
   vq_.clear();
+}
+
+
+CGraph::CGraph(LinearFunctionPtr lf)
+  : aNodes_(0),
+    changed_(false),
+    hInds_(0),
+    hNnz_(0),
+    hOffs_(0),
+    hStarts_(0),
+    gOffs_(0),
+    oNode_(0)
+{
+  // Pre cleanup
+  dq_.clear();
+  varNode_.clear();
+  vq_.clear();
+
+  // Init Vars
+  ConstVariablePtr v;
+  UInt i = 0, N = lf->getNumTerms();
+  CNode* nodes[N];
+  CNode* node_v;
+  CNode* node_c;
+  CNode* node_out;
+
+  for (VariableGroupConstIterator it = lf->termsBegin(); it != lf->termsEnd() && i < N; ++it, ++i)
+  {
+    // Get Var
+    v = it->first;
+    node_v = newNode(v);
+
+    // Get Coefficient
+    node_c = newNode(lf->getWeight(v));
+
+    // Get Term
+    nodes[i] = newNode(OpMult, node_c, node_v);
+  }
+  node_out = newNode(OpSumList, nodes, N);
+
+  // Set Out (Initial)
+  // TODO: Finalize?
+  setOut(node_out);
+} 
+
+
+CGraph::CGraph(QuadraticFunctionPtr qf)
+  : aNodes_(0),
+    changed_(false),
+    hInds_(0),
+    hNnz_(0),
+    hOffs_(0),
+    hStarts_(0),
+    gOffs_(0),
+    oNode_(0)
+{
+  // Pre cleanup
+  dq_.clear();
+  varNode_.clear();
+  vq_.clear();
+
+  // Init Vars
+  ConstVariablePair vp;
+  ConstVariablePtr v1;
+  ConstVariablePtr v2;
+  UInt i = 0, N = qf->getNumTerms();
+  CNode* nodes[N];
+  CNode* node_v1;
+  CNode* node_v2;
+  CNode* node_c;
+  CNode* node_out;
+
+  for (VariablePairGroupConstIterator it = qf->begin(); it != qf->end() && i < N; ++it, ++i)
+  {
+    // Get Variable Pair
+    vp = it->first;
+
+    // Get Var 1
+    v1 = vp.first;
+    node_v1 = newNode(v1);
+
+    // Get Var 2
+    v2 = vp.second;
+    if(v2 == v1)
+    {
+      // Same Terms? Square
+      nodes[i] = newNode(OpSqr, node_v1, NULL);
+    }
+    else
+    {
+      node_v2 = newNode(v2);
+
+      // Different Terms? Multiply
+      nodes[i] = newNode(OpMult, node_v1, node_v2);
+    }
+
+    // Get Coefficient
+    node_c = newNode(qf->getWeight(vp));
+
+    // Get Term
+    nodes[i] = newNode(OpMult, node_c, nodes[i]);
+  }
+  node_out = newNode(OpSumList, nodes, N);
+
+  // Set Out (Initial)
+  // TODO: Finalize?
+  setOut(node_out);
 }
 
 

@@ -20,6 +20,8 @@
 #include "Types.h"
 #include "NonlinearFunction.h"
 #include "OpCode.h"
+#include "LinearFunction.h"
+#include "QuadraticFunction.h"
 
 namespace Minotaur {
 
@@ -34,6 +36,12 @@ class CGraph : public NonlinearFunction {
 public:
   /// Default constructor.
   CGraph();
+
+  // Construct from a Linear Function
+  CGraph(LinearFunctionPtr lf);
+
+  // Construct from a Quadratic Function
+  CGraph(QuadraticFunctionPtr qf);
 
   /// Default constructor.
   ~CGraph();
